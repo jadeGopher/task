@@ -1,0 +1,1858 @@
+openapi: 3.0.1
+
+info:
+  title: Reporter REST API
+  version: 0.0.1
+
+tags:
+  - name: SimpleStats
+    description: The API provides methods for obtaining simple statistics.
+  - name: AdvancedStats
+    description: The API provides methods for obtaining advanced statistics.
+  - name: Sessions
+    description: Methods for working with sessions.
+  - name: Messages
+    description: Methods for working with messages
+  - name: Clients
+    description: Methods for interacting with clients.
+  - name: Labels
+    description: Methods for interacting with labels.
+  - name: Comments
+    description: Methods for interacting with log comments.
+  - name: Filters
+    description: Methods for interacting with filters
+  - name: ScenarioExperiments
+    description: Specific endpoint for scenario experiments
+
+paths:
+  /api/reporter/p/{token}/sessions/filter:
+    post:
+      summary: Get sessions by filter
+      description: To know how to compose a request body, look at the [request](#operation/getAvailableFilters) response. It contains mapping for filters and filters type and optional values for each filters.
+      operationId: getSessionDataByFilter
+      tags:
+        - Sessions
+      parameters:
+        - $ref: '#/components/parameters/analyticsToken'
+        - $ref: '#/components/parameters/pageParamOptional'
+        - $ref: '#/components/parameters/sizeParamOptional'
+        - $ref: '#/components/parameters/needToReturnSessionLabelsParamOptional'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiltersDto'
+      responses:
+        '200':
+          description: Sessions matching the specified filter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionsData'
+
+  /api/reporter/p/{token}/projects/sessions/count:
+    get:
+      summary: Count project sessions
+      operationId: countAllProjectsSessions
+      tags:
+        - Sessions
+      parameters:
+        - $ref: '#/components/parameters/analyticsToken'
+      responses:
+        '200':
+          description: All projects sessions amount
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectsSessionsCountDto'
+
+  # *******************************************************************************
+  #                                 Filters
+  # *******************************************************************************
+
+  /api/reporter/p/{token}/filter-options:
+    post:
+      summary: Get filter options
+      description: To know how to compose a request body, look at the [request](#operation/getAvailableFilters) response. It contains mapping for filters and filters type and optional values for each filters.
+      operationId: getFilterOptions
+      tags:
+        - Filters
+      parameters:
+        - $ref: '#/components/parameters/analyticsToken'
+        - $ref: '#/components/parameters/filterKeyParamRequired'
+        - $ref: '#/components/parameters/analyticsSectionParamRequired'
+        - $ref: '#/components/parameters/languageHeader'
+        - $ref: '#/components/parameters/pageParamOptional'
+        - $ref: '#/components/parameters/sizeParamOptional'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiltersDto'
+      responses:
+        '200':
+          description: Filter options
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FilterOption'
+
+  /api/reporter/p/{token}/interval-filter-options:
+    post:
+      summary: Get interval filter options
+      description: To know how to compose a request body, look at the [request](#operation/getAvailableFilters) response. It contains mapping for filters and filters type and optional values for each filters.
+      operationId: getIntervalFilterOptions
+      tags:
+        - Filters
+      parameters:
+        - $ref: '#/components/parameters/analyticsToken'
+        - $ref: '#/components/parameters/filterKeyParamRequired'
+        - $ref: '#/components/parameters/analyticsSectionParamRequired'
+        - $ref: '#/components/parameters/languageHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiltersDto'
+      responses:
+        '200':
+          description: Interval filter options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntervalFilterOptions'
+
+  /api/reporter/p/{token}/user-filter-sets/{filterSetId}:
+    get:
+      summary: Get user filter set
+      operationId: getUserFilterSet
+      tags:
+        - Filters
+      parameters:
+        - $ref: '#/components/parameters/analyticsToken'
+        - $ref: '#/components/parameters/filterSetId'
+      responses:
+        '200':
+          description: User filter set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserFilterSetDto'
+        '404':
+          description: User filter set not found
+
+  /api/reporter/p/{token}/user-filter-sets/filterSetId:
+    post:
+      summary: Get filterSetId by user filter set
+      operationId: createFilterSetId
+      tags:
+        - Filters
+      parameters:
+        - $ref: '#/components/parameters/analyticsToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiltersDto'
+      responses:
+        '200':
+          description: FilterSetId
+          content:
+            application/json:
+              schema:
+                type: string
+      x-security-authority: GENERAL_ANALYTICS_READ
+
+components:
+  parameters:
+
+    ### Path parameters ###
+
+    idPath:
+      name: id
+      in: path
+      description: Object id
+      required: true
+      schema:
+        type: integer
+        format: int64
+    filterSetId:
+      in: path
+      name: filterSetId
+      description: User filter set id
+      required: true
+      schema:
+        type: string
+    questionId:
+      in: path
+      name: questionId
+      description: Question identifier
+      required: true
+      schema:
+        type: string
+    reportGenerationTaskId:
+      in: path
+      name: reportGenerationTaskId
+      description: Report generation task id
+      required: true
+      schema:
+        type: string
+    analyticsToken:
+      in: path
+      name: token
+      description: Analytics token
+      required: true
+      schema:
+        type: string
+
+    ### Headers ###
+
+    languageHeader:
+      name: language
+      in: header
+      description: Language of resources
+      schema:
+        type: string
+
+    timeZoneOffsetHeader:
+      in: header
+      name: Timezone
+      description: Timezone offset
+      schema:
+        type: integer
+        format: int32
+
+    refererHeader:
+      name: Referer
+      in: header
+      description: Referer of resources
+      schema:
+        type: string
+
+    loggingEnabledE2ECheckHeader:
+      name: loggingEnabledE2ECheck
+      in: header
+      description: enable/disable logging for e2e check
+      required: true
+      schema:
+        type: boolean
+
+    ### Query parameters ###
+
+    pageParamOptional:
+      in: query
+      name: page
+      description: Page number
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+    sizeParamOptional:
+      in: query
+      name: size
+      description: Page size
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        default: 20
+    needToReturnSessionLabelsParamOptional:
+      in: query
+      name: needToReturnSessionLabels
+      description: Need to return session labels parameter
+      required: false
+      schema:
+        type: boolean
+    dateFromParamRequired:
+      in: query
+      name: dateFrom
+      description: The date from which the report will be built.
+      required: true
+      schema:
+        type: string
+        format: date
+    dateTimeFromParamRequired:
+      in: query
+      name: dateFrom
+      description: The date-time from which the report will be built.
+      required: true
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    dateTimeFromP1ParamRequired:
+      in: query
+      name: dateFromP1
+      description: The date-time from which the report will be built.
+      required: true
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    dateTimeFromP2ParamRequired:
+      in: query
+      name: dateFromP2
+      description: The date-time from which the report will be built.
+      required: true
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    dateFromParamOptional:
+      in: query
+      name: dateFrom
+      description: The date-time from which the report will be built.
+      required: false
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    dateToParamRequired:
+      in: query
+      name: dateTo
+      description: The date by which the report will be built.
+      required: true
+      schema:
+        type: string
+        format: date
+    dateTimeToParamRequired:
+      in: query
+      name: dateTo
+      description: The date-time by which the report will be built.
+      required: true
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    dateTimeToP1ParamRequired:
+      in: query
+      name: dateToP1
+      description: The date-time by which the report will be built.
+      required: true
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    dateTimeToP2ParamRequired:
+      in: query
+      name: dateToP2
+      description: The date-time by which the report will be built.
+      required: true
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    dateToParamOptional:
+      in: query
+      name: dateTo
+      description: The date-time by which the report will be built.
+      required: false
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    botIdParamRequired:
+      in: query
+      name: botId
+      description: Natural bot id
+      required: true
+      schema:
+        type: string
+    botIdParamOptional:
+      in: query
+      name: botId
+      description: Natural bot id
+      required: false
+      schema:
+        type: string
+    botIdsParamOptional:
+      in: query
+      name: botIds
+      description: List of string bot ids.
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+    shouldRenderUrlsParamOptional:
+      in: query
+      name: shouldRenderUrls
+      description: Should render urls in workbook
+      required: false
+      schema:
+        type: boolean
+        default: false
+    timeZoneOffsetParamOptional:
+      in: query
+      name: timezone
+      required: false
+      description: Timezone offset
+      schema:
+        type: integer
+        format: int32
+    languageParamOptional:
+      name: language
+      in: query
+      required: false
+      description: Language of resources
+      schema:
+        type: string
+    transferToOperatorMethodParamRequired:
+      in: query
+      name: transferToOperatorMethod
+      description: The method of transfer to the operator.
+      required: true
+      schema:
+        type: string
+        enum:
+          - SWITCH
+          - TEXT
+    textForTransferParamOptional:
+      in: query
+      name: textForTransfer
+      description: The text response of the bot, which will be considered a transfer to the operator.
+      required: false
+      schema:
+        type: string
+    callTaskIdParamOptional:
+      in: query
+      name: callTaskId
+      description: CallTask identifier
+      required: false
+      schema:
+        type: integer
+        format: int64
+    sessionIdParamRequired:
+      in: query
+      name: sessionId
+      description: Session string identifier
+      required: true
+      schema:
+        type: string
+    clientIdParamRequired:
+      in: query
+      name: clientId
+      description: Client id
+      required: true
+      schema:
+        type: string
+    questionIdParamRequired:
+      in: query
+      name: questionId
+      description: Question identifier
+      required: true
+      schema:
+        type: string
+    startTimeParamOptional:
+      in: query
+      name: startTime
+      description: Start date-time for filtering.
+      required: false
+      schema:
+        type: string
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        format: date-time
+    hideEmptyMessageParamOptional:
+      in: query
+      name: hideEmptyMessage
+      description: Hide empty message for filtering
+      required: false
+      schema:
+        type: boolean
+    endTimeParamOptional:
+      in: query
+      name: endTime
+      description: End date-time for filtering.
+      required: false
+      schema:
+        type: string
+        format: date-time
+        description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+    mailingResultsParamOptional:
+      in: query
+      name: mailingResults
+      description: List of mailing results
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+    mailingResultsNotLikeParamOptional:
+      in: query
+      name: mailingResultsNotLike
+      description: List of values that should not be present in mailing results
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+    responseDataJsonPathParamOptional:
+      in: query
+      name: responseDataJsonPath
+      description: List of fields in the responseData that will need to be returned separately (in customFields field)
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+    stepParamOptional:
+      in: query
+      name: step
+      description: The step with which statistics will be built.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 1
+    analyticsSectionParamRequired:
+      in: query
+      name: analyticsSection
+      description: analytics section
+      required: true
+      schema:
+        $ref: '#/components/schemas/AnalyticsSection'
+    filterKeyParamRequired:
+      in: query
+      name: filterKey
+      description: filterkey
+      required: true
+      schema:
+        $ref: '#/components/schemas/FilterKey'
+    intervalTypeParamOptional:
+      in: query
+      name: intervalType
+      description: Interval with which statistics will be generated
+      required: false
+      schema:
+        $ref: '#/components/schemas/IntervalType'
+
+    experimentKeyParamRequired:
+      in: query
+      name: experimentKey
+      description: Scenario experiment key
+      required: true
+      schema:
+        type: string
+    channelTypeParamOptional:
+      in: query
+      name: channelType
+      required: false
+      schema:
+        type: string
+
+  schemas:
+    Pagination:
+      required:
+        - pageNum
+        - pageSize
+        - totalCount
+      properties:
+        pageNum:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
+
+    TimestampToValue:
+      type: object
+      required:
+        - ts
+        - value
+      properties:
+        ts:
+          type: integer
+          format: int64
+        value:
+          type: number
+          format: double
+
+    SessionsData:
+      required:
+        - paging
+        - sessions
+      properties:
+        paging:
+          $ref: '#/components/schemas/Pagination'
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionInfo'
+        filterSetId:
+          type: string
+
+    FiltersDto:
+      type: object
+      properties:
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsFilter'
+
+    AnalyticsFilter:
+      type: object
+      required:
+        - key
+        - type
+      properties:
+        key:
+          $ref: '#/components/schemas/FilterKey'
+        type:
+          type: string  # enum not supported
+        from:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        to:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+
+    TextFilter:
+      allOf:
+        - $ref: '#/components/schemas/AnalyticsFilter'
+        - type: object
+          required:
+            - values
+            - comparisonType
+            - isCaseSensitive
+          properties:
+            values:
+              type: array
+              items:
+                type: string
+            comparisonType:
+              $ref: '#/components/schemas/TextComparisonType'
+            isCaseSensitive:
+              type: boolean
+              default: false
+
+    DateTimeRangeFilter:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        to:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+
+    NumericRangeFilter:
+      allOf:
+        - $ref: '#/components/schemas/AnalyticsFilter'
+        - type: object
+          properties:
+            from:
+              type: number
+              format: double
+            to:
+              type: number
+              format: double
+
+    RadioFilter:
+      allOf:
+        - $ref: '#/components/schemas/AnalyticsFilter'
+        - type: object
+          properties:
+            option:
+              type: string
+
+    CustomFieldsInResponseFilter:
+      allOf:
+        - $ref: '#/components/schemas/AnalyticsFilter'
+        - type: object
+          properties:
+            responseDataJsonPaths:
+              type: array
+              items:
+                type: string
+
+    FilterSettings:
+      type: object
+      required:
+        - key
+        - type
+        - filterDependent
+        - withFilterInput
+      properties:
+        key:
+          $ref: '#/components/schemas/FilterKey'
+        type:
+          type: string  # enum not supported
+        filterDependent:
+          type: boolean
+        withFilterInput:
+          type: boolean
+        helpMessage:
+          type: string
+        helpLink:
+          type: string
+      discriminator:
+        propertyName: type
+        mapping:
+          TEXT: '#/components/schemas/TextFilterSettings'
+          DATE_TIME_RANGE: '#/components/schemas/DateTimeRangeFilterSettings'
+          NUMERIC_RANGE: '#/components/schemas/NumericRangeFilterSettings'
+          CHECKBOX: '#/components/schemas/CheckboxFilterSettings'
+          RADIO: '#/components/schemas/RadioFilterSettings'
+          TREE: '#/components/schemas/TreeFilterSettings'
+          CUSTOM_FIELDS_IN_RESPONSE: '#/components/schemas/CustomFieldsInResponseFilterSettings'
+          COMPOSITE_FILTER: '#/components/schemas/CompositeFilterSettings'
+
+    TextFilterSettings:
+      allOf:
+        - $ref: '#/components/schemas/FilterSettings'
+        - type: object
+          properties:
+            placeholder:
+              type: string
+            comparisonOptions:
+              type: array
+              items:
+                $ref: '#/components/schemas/TextComparisonOption'
+
+    DateTimeRangeFilterSettings:
+      allOf:
+        - $ref: '#/components/schemas/FilterSettings'
+        - type: object
+          properties:
+            defaultValue:
+              $ref: '#/components/schemas/DateTimeRangeDefaultValue'
+
+    NumericRangeFilterSettings:
+      allOf:
+        - $ref: '#/components/schemas/FilterSettings'
+        - type: object
+
+    CustomFieldsInResponseFilterSettings:
+      allOf:
+        - $ref: '#/components/schemas/FilterSettings'
+        - type: object
+          required:
+            - placeholder
+          properties:
+            placeholder:
+              type: string
+
+    TextComparisonOption:
+      type: object
+      required:
+        - type
+        - label
+        - isDefault
+      properties:
+        type:
+          $ref: '#/components/schemas/TextComparisonType'
+        label:
+          type: string
+        isDefault:
+          type: boolean
+
+    FilterOption:
+      type: object
+      required:
+        - value
+        - label
+        - isSelected
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+        isSelected:
+          type: boolean
+          default: false
+        frequency:
+          type: integer
+          format: int64
+        parentValue:
+          type: string
+        childValues:
+          type: array
+          items:
+            type: string
+
+    IntervalFilterOptions:
+      type: object
+      required:
+        - minValue
+        - maxValue
+      properties:
+        minValue:
+          type: number
+          format: double
+        maxValue:
+          type: number
+          format: double
+
+    DateTimeRangeDefaultValue:
+      type: object
+      required:
+        - offset
+        - unit
+      properties:
+        offset:
+          type: integer
+          format: int64
+        unit:
+          $ref: '#/components/schemas/IntervalType'
+
+    NumericRangeDefaultValue:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        offset:
+          type: integer
+          format: int64
+        unit:
+          $ref: '#/components/schemas/IntervalType'
+
+    ClientsData:
+      required:
+        - paging
+        - clients
+      properties:
+        paging:
+          $ref: '#/components/schemas/Pagination'
+        clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientExtendedInfo'
+        filterSetId:
+          type: string
+
+    ProjectsSessionsCountDto:
+      required:
+        - projectShortName
+        - amount
+      properties:
+        projectShortName:
+          type: string
+        amount:
+          type: integer
+          format: int64
+
+    SessionInfo:
+      type: object
+      required:
+        - sessionId
+        - projectShortName
+        - channelType
+        - botId
+        - client
+        - startTime
+        - isLivechat
+      properties:
+        sessionId:
+          type: string
+        projectShortName:
+          type: string
+        channelType:
+          type: string
+        botId:
+          type: string
+        client:
+          $ref: '#/components/schemas/ClientInfo'
+        startTime:
+          type: string
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+          format: date-time
+        firstQuestion:
+          type: string
+        lastQuestion:
+          type: string
+        questionCount:
+          type: integer
+          format: int64
+        duration:
+          type: integer
+          format: int64
+        callTaskId:
+          type: integer
+          format: int64
+        isCallIncoming:
+          type: boolean
+        sessionResult:
+          type: string
+        audioFileUrl:
+          type: string
+        responseData:
+          $ref: '#/components/schemas/ObjectNode'
+        customFields:
+          $ref: '#/components/schemas/ObjectNode'
+        sessionData:
+          type: object
+          additionalProperties:
+            type: string
+        isLivechat:
+          type: boolean
+          default: false
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionLabelDto'
+
+    MessagesForSessionDto:
+      type: object
+      required:
+        - paging
+        - session
+        - messages
+      properties:
+        paging:
+          $ref: '#/components/schemas/Pagination'
+        session:
+          $ref: '#/components/schemas/SessionInfo'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+
+    MessagesForClientDto:
+      type: object
+      required:
+        - paging
+        - client
+        - messages
+      properties:
+        paging:
+          $ref: '#/components/schemas/Pagination'
+        client:
+          $ref: '#/components/schemas/ClientExtendedInfo'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      required:
+        - timestamp
+        - questionId
+        - isLivechat
+        - sessionId
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        questionId:
+          type: string
+        isLivechat:
+          type: boolean
+        question:
+          type: string
+        textAnswer:
+          type: string
+        event:
+          type: string
+        operatorInfo:
+          $ref: '#/components/schemas/OperatorInfo'
+        nlpInfo:
+          $ref: '#/components/schemas/NlpInfo'
+        pageName:
+          type: string
+        previousPageName:
+          type: string
+        requestData:
+          $ref: '#/components/schemas/ObjectNode'
+        data:
+          $ref: '#/components/schemas/ObjectNode'
+        responseData:
+          $ref: '#/components/schemas/ObjectNode'
+        utterancesJson:
+          $ref: '#/components/schemas/JsonNode'
+        exception:
+          type: string
+        processingTime:
+          type: integer
+          format: int32
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageLabelDto'
+        cleaned:
+          type: boolean
+          default: false
+        comment:
+          type: string
+        status:
+          $ref: '#/components/schemas/MessageStatus'
+        sessionId:
+          type: string
+
+    MessageData:
+      type: object
+      required:
+        - paging
+        - messages
+      properties:
+        paging:
+          $ref: '#/components/schemas/Pagination'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtendedMessage'
+        filterSetId:
+          type: string
+
+    ExtendedMessage:
+      type: object
+      required:
+        - sessionId
+        - projectShortName
+        - channelType
+        - botId
+        - client
+        - sessionStartTime
+        - timestamp
+        - questionId
+        - isLivechat
+      properties:
+        sessionId:
+          type: string
+        projectShortName:
+          type: string
+        channelType:
+          type: string
+        botId:
+          type: string
+        client:
+          $ref: '#/components/schemas/ClientInfo'
+        sessionStartTime:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        timestamp:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        questionId:
+          type: string
+        isLivechat:
+          type: boolean
+        question:
+          type: string
+        textAnswer:
+          type: string
+        event:
+          type: string
+        operatorInfo:
+          $ref: '#/components/schemas/OperatorInfo'
+        nlpInfo:
+          $ref: '#/components/schemas/NlpInfo'
+        pageName:
+          type: string
+        previousPageName:
+          type: string
+        callTaskId:
+          type: integer
+          format: int64
+        isCallIncoming:
+          type: boolean
+        requestData:
+          $ref: '#/components/schemas/ObjectNode'
+        data:
+          $ref: '#/components/schemas/ObjectNode'
+        responseData:
+          $ref: '#/components/schemas/ObjectNode'
+        utterancesJson:
+          $ref: '#/components/schemas/JsonNode'
+        exception:
+          type: string
+        processingTime:
+          type: integer
+          format: int32
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageLabelDto'
+        sessionLabels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionLabelDto'
+        cleaned:
+          type: boolean
+          default: false
+        comment:
+          type: string
+
+    StateRoutesData:
+      type: object
+      required:
+        - paging
+        - routes
+      properties:
+        paging:
+          $ref: '#/components/schemas/Pagination'
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateRoutesInfo'
+        filterSetId:
+          type: string
+
+    StateRoutesInfo:
+      type: object
+      required:
+        - states
+        - sessionsCount
+      properties:
+        stateRoutes:
+          type: array
+          items:
+            type: string
+        stateRouteResult:
+          type: string
+        sessionsCount:
+          type: integer
+          format: int64
+
+    ClientInfo:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        username:
+          type: string
+
+    ClientExtendedInfo:
+      type: object
+      required:
+        - id
+        - accountId
+        - projectShortName
+        - channelType
+        - lastSessionId
+        - joinDate
+        - lastVisitDate
+        - isBlocked
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        username:
+          type: string
+        accountId:
+          type: integer
+          format: int64
+        projectShortName:
+          type: string
+        channelType:
+          type: string
+        botId:
+          type: string
+        lastSessionId:
+          type: string
+        joinDate:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        lastVisitDate:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        isBlocked:
+          type: boolean
+        blockReason:
+          type: string
+        blockedBy:
+          type: integer
+          format: int64
+        blockDate:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+
+    OperatorInfo:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photoUrl:
+          type: string
+        channelType:
+          type: string
+
+    NlpInfo:
+      type: object
+      properties:
+        nlpState:
+          type: string
+        nlpClass:
+          type: string
+        fromState:
+          type: string
+        pattern:
+          type: string
+        effectivePattern:
+          type: string
+        confidence:
+          type: number
+          format: double
+        rule:
+          type: string
+        ruleType:
+          type: string
+
+    SessionLabelDto:
+      type: object
+      required:
+        - id
+        - name
+        - priority
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+
+    SessionLabelCreate:
+      required:
+        - name
+        - priority
+      properties:
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+
+    MessageLabelUpdate:
+      required:
+        - name
+        - groupId
+        - priority
+      properties:
+        name:
+          type: string
+        groupId:
+          type: integer
+          format: int64
+        priority:
+          type: integer
+          format: int32
+
+    LabelPriorityChangeDto:
+      required:
+        - id
+        - newPriority
+      properties:
+        id:
+          type: integer
+          format: int64
+        newPriority:
+          type: integer
+          format: int32
+
+    MessageLabelDto:
+      type: object
+      required:
+        - id
+        - name
+        - priority
+        - group
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+        group:
+          $ref: '#/components/schemas/MessageLabelGroupDto'
+
+    MessageLabelCreate:
+      type: object
+      required:
+        - name
+        - priority
+        - group
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+        group:
+          $ref: '#/components/schemas/MessageLabelGroupDto'
+
+    MessageLabelGroupDto:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+
+    LogLabelGroupCreate:
+      required:
+        - name
+        - priority
+      properties:
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+
+    UpdateMessageLabelGroupDto:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+
+    AddCommentDto:
+      type: object
+      required:
+        - questionId
+        - comment
+      properties:
+        questionid:
+          type: string
+        comment:
+          type: string
+
+    BlockClientDto:
+      type: object
+      required:
+        - blockedBy
+      properties:
+        blockReason:
+          type: string
+        blockedBy:
+          type: integer
+          format: int64
+
+    DeleteLabelDto:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+
+    DeleteLabelGroupDto:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+
+    UpdateSessionLabelDto:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+
+    UpdateMessageLabelDto:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int32
+        groupId:
+          type: integer
+          format: int64
+        groupName:
+          type: string
+        groupPriority:
+          type: integer
+          format: int32
+
+    LabelIdDto:
+      type: object
+      required:
+        - labelId
+      properties:
+        labelId:
+          type: integer
+          format: int64
+
+    TelephonyStats:
+      type: object
+      required:
+        - averageCallDurationInSeconds
+        - billingCount
+        - incomingCount
+        - outgoingCount
+      properties:
+        averageCallDurationInSeconds:
+          type: number
+          format: double
+        billingCount:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampToValue'
+        incomingCount:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampToValue'
+        outgoingCount:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampToValue'
+
+    TimestampToValueStatsDto:
+      type: object
+      required:
+        - stats
+        - totalCount
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampToValue'
+        totalCount:
+          type: number
+          format: double
+        filterSetId:
+          type: string
+
+    ProjectUniqClientsDto:
+      type: object
+      required:
+        - projectShortName
+        - totalCount
+      properties:
+        projectShortName:
+          type: string
+        totalCount:
+          type: integer
+          format: int64
+
+    LogLabelStatsDto:
+      type: object
+      required:
+        - stats
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogLabelStats'
+        filterSetId:
+          type: string
+
+    LogLabelStats:
+      type: object
+      required:
+        - label
+        - tsToValues
+        - totalCount
+      properties:
+        label:
+          $ref: '#/components/schemas/MessageLabelDto'
+        tsToValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampToValue'
+        totalCount:
+          type: integer
+          format: int64
+
+    SessionLabelStatsDto:
+      type: object
+      required:
+        - stats
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionLabelStats'
+        filterSetId:
+          type: string
+
+    SessionLabelStats:
+      type: object
+      required:
+        - label
+        - tsToValues
+        - totalCount
+      properties:
+        label:
+          $ref: '#/components/schemas/SessionLabelDto'
+        tsToValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampToValue'
+        totalCount:
+          type: integer
+          format: int64
+
+    PageNumberDto:
+      type: object
+      required:
+        - pageNumber
+      properties:
+        pageNumber:
+          type: integer
+          format: int64
+
+    ScenarioExperimentJoinedSessionsDto:
+      type: object
+      required:
+        - key
+        - count
+      properties:
+        key:
+          type: string
+        count:
+          type: integer
+          format: int64
+
+    ScenarioExperimentBranchesDto:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+        description:
+          type: string
+
+    UserFilterSetDto:
+      type: object
+      required:
+        - filterSetId
+      properties:
+        filterSetId:
+          type: string
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsFilter'
+        intervalType:
+          $ref: '#/components/schemas/IntervalType'
+        step:
+          type: integer
+          format: int32
+
+    # Reports
+
+    ReportGenerationTaskIdDto:
+      type: object
+      required:
+        - taskId
+      properties:
+        taskId:
+          type: string
+
+    ReportGenerationTasksDto:
+      type: object
+      required:
+        - tasks
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportGenerationTaskDto'
+
+    CreateReportDto:
+      type: object
+      properties:
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsFilter'
+        settings:
+          $ref: '#/components/schemas/ReportSettings'
+
+    CreateDailyReportDto:
+      type: object
+      required:
+        - date
+      properties:
+        date:
+          type: string
+          format: date
+        settings:
+          $ref: '#/components/schemas/ReportSettings'
+
+    ReportSettings:
+      type: object
+      required:
+        - fileType
+      properties:
+        fileType:
+          $ref: '#/components/schemas/FileType'
+        withHeader:
+          type: boolean
+          default: true
+        delimiter:
+          type: string
+          default: ','
+          maxLength: 1
+          description: 'Only for csv file type'
+        dateTimeFormat:
+          type: string
+          default: 'yyyy-MM-dd HH:mm:ss.SSS'
+          description: 'Format: https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html'
+
+    ReportGenerationTaskDto:
+      type: object
+      required:
+        - taskId
+        - accountId
+        - creationTime
+        - status
+        - reportType
+      properties:
+        taskId:
+          type: string
+        accountId:
+          type: integer
+          format: int64
+        creationTime:
+          type: string
+          format: date-time
+          description: Format yyyy-MM-ddTHH:mm:ss.SSSZ
+        status:
+          $ref: '#/components/schemas/ReportGenerationTaskStatus'
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        settings:
+          $ref: '#/components/schemas/ReportSettings'
+        projectShortName:
+          type: string
+        writeCount:
+          type: integer
+          format: int64
+        totalCount:
+          type: integer
+          format: int64
+        fileUrl:
+          type: string
+        fileName:
+          type: string
+
+    E2EComponent:
+      required:
+        - name
+        - status
+        - startTime
+        - elapsedTime
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+        startTime:
+          type: string
+        elapsedTime:
+          type: integer
+          format: int64
+
+    # Enums
+
+    AnalyticsSection:
+      type: string
+      enum:
+        - CLIENTS
+        - SESSIONS
+
+    FilterKey:
+      type: string
+      enum:
+        - SESSION_ID
+        - SESSION_START_TIME
+        - SESSION_END_TIME
+        - SESSION_LABELS
+        - SESSION_RESULT
+        - INITIATOR
+        - CALL_TASK_ID
+        - CHANNEL_TYPE
+        - BOT_ID
+        - CLIENT_ID_OR_NAME
+        - CLIENT_JOIN_TIME
+        - CLIENT_LAST_ACTIVITY_TIME
+        - MESSAGE_TYPE
+        - MESSAGE_TIME
+        - MESSAGE_TEXT
+        - ANSWER_TEXT
+        - MESSAGE_COUNT
+        - LOG_LABELS
+        - COMMENT_TEXT
+        - NLP_CLASS
+        - NLP_STATE
+        - INTENT
+        - TRANSFER_TO_OPERATOR
+        - WITHOUT_EMPTY_SESSIONS
+        - WITHOUT_EMPTY_MESSAGES
+        - CUSTOM_FIELDS_IN_RESPONSE
+        - EXCEPTION_EXISTENCE
+        - SESSION_DATA
+        - STATE_ROUTES
+
+    TextComparisonType:
+      type: string
+      enum:
+        - NOT_IMPORTANT
+        - CONTAINS
+        - NOT_CONTAINS
+        - EQUALS
+
+    InitiatorType:
+      type: string
+      enum:
+        - ANY
+        - CLIENT
+        - BOT
+
+    TransferToOperatorFilterType:
+      type: string
+      enum:
+        - ANY
+        - WITH_TRANSFER
+        - WITHOUT_TRANSFER
+
+    YesNoFilterOption:
+      type: string
+      enum:
+        - "NO"
+        - "YES"
+
+    YesNoNotImportantFilterOption:
+      type: string
+      enum:
+        - "NO"
+        - "YES"
+        - "NOT_IMPORTANT"
+
+    IntervalType:
+      type: string
+      enum:
+        - HOUR
+        - DAY
+        - WEEK
+        - MONTH
+        - QUARTER
+        - YEAR
+
+    ReportGenerationTaskStatus:
+      type: string
+      enum:
+        - CREATED
+        - STARTED
+        - STOPPED
+        - COMPLETED
+        - FAILED
+        - DELETED
+
+    ReportType:
+      type: string
+      enum:
+        - MESSAGES
+        - SESSIONS
+        - CLIENTS
+        - TELEPHONY
+        - DAILY
+        - STATE_ROUTES
+        - CLIENTS_LIST
+
+    FileType:
+      type: string
+      enum:
+        - XLSX
+        - CSV
+
+    MessageStatus:
+      type: string
+      enum:
+        - SENT
+        - DELIVERED
+        - READ
+        - NOT_SENT
+        - NOT_DELIVERED
+
+    # Stubs
+
+    ObjectNode:
+      type: object
+
+    JsonNode:
+      type: object
+
+  responses:
+    EmptyResponse:
+      description: Ok
+
+    ReportGenerationTaskResponse:
+      description: Report generation task
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReportGenerationTaskDto'

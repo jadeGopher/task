@@ -1,11 +1,13 @@
-# Description 
-Thus, jaicp provided their API in OpenAPI format
-(possible download from [here](https://app.jaicp.com/reporter/static/specs/reporter-public-en.html))
-I've decided to generate API client.
+# Description
+Due to implementation that relates on code generation from OpenAPI specification 
+I've decided to write test task in dedicated github repository. This decision was kinda rocky 
+(needed to edit some specifications in .yml ) but it works.
 
-# Setting up environment
-Firstly you need to install openapi (here link to installation [guide](https://openapi-generator.tech/docs/installation/)).
+# How to run
+- Create `config.json` file in root directory. You can copy `config_example.json` as well and rename it
+- Execute `go run main.go` in root directory
+- You will see info about bots in stdout
 
-Then you need to open terminal in project folder and execute command `make generate_api`.
-
-Congratulations! Everything is done and you can run testing task.
+# How to regenerate api
+- Install [oapi-codegen](https://github.com/deepmap/oapi-codegen) tool
+- Run `make generate_api` in cmd
